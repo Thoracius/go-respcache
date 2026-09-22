@@ -1,28 +1,37 @@
 # respcache
 
-One place to decide HTTP response caching: **ETag**, **Last-Modified**,
-**Cache-Control / max-age**, **gzip**, **304 Not Modified**, and an optional
-**in-memory server cache** of the finished response.
+An elegant Go HTTP response layer that decides cache policy in one place:
+ETag, Last-Modified, Cache-Control/max-age, gzip, conditional 304 responses,
+and an optional server-side cache of the finished response.
 
-Ported from the `Response` class of the Flashdance PHP framework (2017).
 Zero dependencies, standard library only.
 
-## Why
+## How it works
 
-Most Go routers leave cache headers entirely to you, and getting 304s right
-means computing an ETag from a body you haven't finished writing yet.
-`respcache` buffers the body, so when the handler returns it knows the exact
-bytes and can:
+This is a port of a PHP class I wrote years ago. The idea is simple: a handler
+writes its body into a `Response` instead of straight to the wire. Along the
+way it can call `LastModified()` as many times as it likes (once per component
+that makes up the page; the latest timestamp wins) and set a cache duration.
+Only when the handler returns, with the whole body known, does the package
+write headers, exactly once.
 
-- compute a strong ETag from the real body,
-- honour `If-None-Match` / `If-Modified-Since` with a bodiless 304,
-- gzip once (and remember the gzipped copy),
-- set `Cache-Control`, `Expires`, `Last-Modified`, `Content-Length`, `Vary`
-  consistently, written exactly once.
+Because the body is known, the ETag is exact, and a matching `If-None-Match`
+or `If-Modified-Since` turns into a 304 without sending any bytes. With a
+server cache configured, the finished response (already gzipped) is kept in
+memory, and the next matching request is answered before the handler runs at
+all: a 304 on a cached hit costs a map lookup and a string compare.
 
-With a server cache attached, a later request for the same path is answered
-from memory before your handler runs — and a 304 on a cached hit costs a map
-lookup and a string compare.
+Most Go routers leave all of this to you, and getting 304s right by hand means
+computing an ETag from a body you have not finished writing yet. `respcache`
+gives you:
+
+- a strong ETag from the real body,
+- `If-None-Match` / `If-Modified-Since` handled with a bodiless 304,
+- gzip once, with the compressed copy remembered,
+- `Cache-Control`, `Expires`, `Last-Modified`, `Content-Length` and `Vary`
+  set consistently and written exactly once,
+- an optional LRU server cache keyed by path, and by chosen headers or
+  cookies when a page varies per user.
 
 ## Usage
 
@@ -143,6 +152,12 @@ cache.MaxBytes = 64 << 20 // raw + gzipped bytes; an entry larger than this is n
 - If the handler panics, nothing is written and nothing is cached.
 - Streaming responses (SSE, large downloads) are not a fit: the body is
   buffered in full. Don't wrap those handlers.
+- The server cache is in-process memory. That is the right default for a
+  single Go server, but it starts cold on restart and is not shared between
+  instances. For a large site or several instances, put a caching reverse
+  proxy or CDN in front (nginx, Varnish, Caddy, Cloudflare): the headers this
+  package sets are designed to make that work, and `Cache` is an interface if
+  you want a Redis- or disk-backed store.
 
 ## Test
 
