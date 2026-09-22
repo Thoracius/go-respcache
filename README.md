@@ -1,5 +1,7 @@
 # respcache
 
+[![test](https://github.com/Thoracius/go-respcache/actions/workflows/test.yml/badge.svg)](https://github.com/Thoracius/go-respcache/actions/workflows/test.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/Thoracius/go-respcache.svg)](https://pkg.go.dev/github.com/Thoracius/go-respcache)
+
 An elegant Go HTTP response layer that decides cache policy in one place:
 ETag, Last-Modified, Cache-Control/max-age, gzip, conditional 304 responses,
 and an optional server-side cache of the finished response.
