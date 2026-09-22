@@ -7,10 +7,11 @@ jobs:
       matrix:
         go: ["1.22", "stable"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: ${{ matrix.go }}
+          cache: false # no dependencies, so no go.sum to key a cache on
       - run: test -z "$(gofmt -l .)"
       - run: go vet ./...
       - run: go test -race -count=1 ./...
