@@ -4,7 +4,7 @@
 
 Cache and compression are integral parts of the HTTP request/response
 cycle but are typically treated as an afterthought in web app development.
-Respcache bridges that gap, providing an approach integrating client- and
+Respcache bridges that gap, while providing an approach that integrates client- and
 server-side caching and compression. 
 
 An elegant Go HTTP response layer that decides cache policy in one place:
