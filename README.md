@@ -2,6 +2,11 @@
 
 [![test](https://github.com/Thoracius/go-respcache/actions/workflows/test.yml/badge.svg)](https://github.com/Thoracius/go-respcache/actions/workflows/test.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/Thoracius/go-respcache.svg)](https://pkg.go.dev/github.com/Thoracius/go-respcache)
 
+Cache and compression are integral parts of the HTTP request/response
+cycle but are typically treated as an afterthought in web app development.
+Respcache bridges that gap, providing an approach integrating client- and
+server-side caching and compression. 
+
 An elegant Go HTTP response layer that decides cache policy in one place:
 ETag, Last-Modified, Cache-Control/max-age, gzip, conditional 304 responses,
 and an optional server-side cache of the finished response.
@@ -10,12 +15,13 @@ Zero dependencies, standard library only.
 
 ## How it works
 
-This is a port of a PHP class I wrote years ago. The idea is simple: a handler
-writes its body into a `Response` instead of straight to the wire. Along the
-way it can call `LastModified()` as many times as it likes (once per component
-that makes up the page; the latest timestamp wins) and set a cache duration.
-Only when the handler returns, with the whole body known, does the package
-write headers, exactly once.
+This is a port of a PHP class I wrote years ago, unhappy with how most
+bloated frameworks failed to offer an elegant solution. The idea is simple:
+a handler writes its body into a `Response` instead of straight to the wire.
+Along the way it can call `LastModified()` as many times as it likes (once
+per component that makes up the page; the latest timestamp wins) and set a
+cache duration. Only when the handler returns, with the whole body known,
+does the package write headers, exactly once.
 
 Because the body is known, the ETag is exact, and a matching `If-None-Match`
 or `If-Modified-Since` turns into a 304 without sending any bytes. With a
